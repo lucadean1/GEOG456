@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Luca Dean's Projects</title>
+    <style>
+        body {
+            background-color: beige;
+            font-family: Arial, sans-serif;
+            margin: 0;
+        }
+        #heading {
+            font-family: Helvetica;
+            width: 100%;
+            background-color: darkred;
+            color: aliceblue;
+            padding: 10px 20px;
+        }
+        #heading h1 {
+            margin: 0;
+        }
+        #file-list {
+            max-width: 800px;
+            margin: 20px auto;
+            padding: 20px;
+            background-color: white;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+        #file-list ul {
+            list-style: none;
+            padding: 0;
+        }
+        #file-list ul li {
+            margin: 10px 0;
+        }
+        #file-list ul li a {
+            text-decoration: none;
+            color: darkred;
+            font-weight: bold;
+        }
+        #file-list ul li a:hover {
+            text-decoration: underline;
+        }
+    </style>
+</head>
+<body>
+    <div id="heading">
+        <h1>Luca Dean's Projects</h1>
+    </div>
+    <div id="file-list">
+        <h2>Available Projects</h2>
+        <ul id="directory-list">
+            <!-- Subdirectories will be dynamically populated -->
+        </ul>
+    </div>
+
+    <script>
+        // Fetch directory list from GitHub
+        const githubApiUrl = 'https://api.github.com/repos/lucadean1/Luca-Dean-GEOG456/contents'; // Replace with your GitHub repo URL
+
+        fetch(githubApiUrl)
+            .then(response => response.json())
+            .then(data => {
+                const directoryList = document.getElementById('directory-list');
+                data.forEach(file => {
+                    // Only include directories (folders)
+                    if (file.type === 'dir') {
+                        const listItem = document.createElement('li');
+                        const link = document.createElement('a');
+                        link.href = file.html_url; // GitHub URL for the folder
+                        link.textContent = file.name;
+                        listItem.appendChild(link);
+                        directoryList.appendChild(listItem);
+                    }
+                });
+            })
+            .catch(error => console.error('Error fetching files:', error));
+    </script>
+</body>
+</html>
