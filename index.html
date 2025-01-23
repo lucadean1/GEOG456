@@ -58,26 +58,31 @@
     </div>
 
     <script>
-        // Fetch directory list from GitHub
-        const githubApiUrl = 'https://api.github.com/repos/lucadean1/Luca-Dean-GEOG456/contents'; // Replace with your GitHub repo URL
+        // GitHub API URL for your repository (replace 'lucadean1/GEOG456' with your repo)
+        const apiURL = 'https://api.github.com/repos/lucadean1/GEOG456/contents/';
 
-        fetch(githubApiUrl)
+        const directoryList = document.getElementById('directory-list');
+
+        // Fetch the contents of the repository
+        fetch(apiURL)
             .then(response => response.json())
             .then(data => {
-                const directoryList = document.getElementById('directory-list');
-                data.forEach(file => {
-                    // Only include directories (folders)
-                    if (file.type === 'dir') {
+                data.forEach(item => {
+                    // Check if the item is a directory
+                    if (item.type === 'dir') {
                         const listItem = document.createElement('li');
                         const link = document.createElement('a');
-                        link.href = file.html_url; // GitHub URL for the folder
-                        link.textContent = file.name;
+                        // Construct the URL for the subdirectory
+                        link.href = `https://lucadean1.github.io/GEOG456/${item.name}`;
+                        link.textContent = item.name; // Use the name of the directory as link text
                         listItem.appendChild(link);
                         directoryList.appendChild(listItem);
                     }
                 });
             })
-            .catch(error => console.error('Error fetching files:', error));
+            .catch(error => {
+                console.error('Error fetching data:', error);
+            });
     </script>
 </body>
 </html>
