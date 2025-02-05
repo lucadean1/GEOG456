@@ -4,100 +4,119 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Squirrels!!!</title>
-<style>
-    body {
-        background-color: beige;
-        margin: 0;
-        padding: 0;
-        display: flex;
-        flex-direction: column;
-        height: 100vh;
-    }
-    #heading {
-        font-family: Helvetica;
-        width: 100%;
-        
-        background-color: darkred;
-        color: aliceblue;
-        text-align: center;
-        padding: 10px 0;
-        box-sizing: border-box;
-        
-    }
-    #map {flex: 1; }
-</style>
-
-<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
-integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY="
-crossorigin=""/>
-
+    <style>
+        body {
+            background-color: beige;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+        }
+        #heading {
+            font-family: Helvetica;
+            width: 100%;
+            background-color: darkred;
+            color: aliceblue;
+            text-align: center;
+            padding: 10px 0;
+            box-sizing: border-box;
+        }
+        #map { flex: 1; }
+        #squirrelPopup {
+            display: none; 
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background: rgba(0, 0, 0, 0.8);
+            color: white;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+        }
+        #squirrelPopup img {
+            max-width: 80%;
+            max-height: 80%;
+            border-radius: 10px;
+        }
+        #squirrelPopup button {
+            margin-top: 20px;
+            padding: 10px 20px;
+            font-size: 18px;
+            cursor: pointer;
+        }
+    </style>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.1/dist/MarkerCluster.css" />
+    <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.1/dist/MarkerCluster.Default.css" />
 </head>
 <body>
-    <div id = 'heading'>
+    <div id="heading">
         <h1>Squirrels!!!</h1>
         <p>I broke the rules for this but I really like this dataset...</p>
-        <a href="https://www.thesquirrelcensus.com/">2018 Central Park Squirrel Census</a>
-    
+        <a href="https://www.thesquirrelcensus.com/" style="color: white;">2018 Central Park Squirrel Census</a>
     </div>
     <div id="map"></div>
+
+    <div id="squirrelPopup" style="display: none;">
+        <p><strong>Woah!!! You really like squirrels!</strong></p>
+        <img id="squirrelGif" src="" alt="Squirrel GIF">
+        <button onclick="hidePopup()">Close</button>
+    </div>
+
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script src="https://unpkg.com/leaflet.markercluster@1.5.1/dist/leaflet.markercluster.js"></script>
+    <script src="Squirrels.js"></script>
+    <script src="squirrel_icon.js"></script>
+    <script>
+        var map = L.map('map').setView([40.7826, -73.9656], 15);
+        L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}').addTo(map);
+
+        var squirrelLayer = L.markerClusterGroup();
+        L.geoJSON(Squirrels, {
+            pointToLayer: function (feature, latlng) {
+                return L.marker(latlng, {icon: Squirrel}).bindPopup(`
+                    <div style="text-align: center;">
+                        <p>Chirp Chirp</p>
+                        <p>Wassup! I'm a Squirrel!</p>
+                        <p>Color = ${feature.properties["Primary Fur Color"] || "N/A"}</p>
+                        <p>Age = ${feature.properties.Age || "N/A"}</p>
+                        <p>Date = ${feature.properties.Date || "N/A"}</p>
+                    </div>
+                `);
+            }
+        }).addTo(squirrelLayer);
+        map.addLayer(squirrelLayer);
+
+        var clicks = 0;
+        const squirrelGifs = ["1.gif", "2.gif", "3.gif", "4.gif", "5.gif", "6.gif"];
+        let gifIndex = 0;
+
+        function showPopup() {
+            const gifPath = `./squirrells/${squirrelGifs[gifIndex]}`;
+            document.getElementById("squirrelGif").src = gifPath;
+            document.getElementById("squirrelPopup").style.display = "flex";
+            gifIndex = (gifIndex + 1) % squirrelGifs.length;
+            setTimeout(hidePopup, 5000);
+        }
+
+        function hidePopup() {
+            document.getElementById("squirrelPopup").style.display = "none";
+        }
+
+        function daclick() {
+            clicks++;
+            if ([5, 7, 11, 20].includes(clicks) || clicks > 35) {
+                showPopup();
+            }
+        }
+
+        map.on('click', daclick);
+        squirrelLayer.on('click', daclick);
+    </script>
 </body>
 </html>
-
-<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
-<script src="https://unpkg.com/leaflet.markercluster@1.5.1/dist/leaflet.markercluster.js"></script>
-<link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.1/dist/MarkerCluster.css" />
-<link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.1/dist/MarkerCluster.Default.css" />
-<script src="Squirrels.js"></script>
-<script src="squirrel_icon.js"></script>
-<script> 
-
-var baselayer = L.tileLayer('https://maps{s}.nyc.gov/xyz/1.0.0/carto/basemap/{z}/{x}/{y}.jpg', {
-  minNativeZoom: 8,
-  maxNativeZoom: 19,
-  subdomains: '1234',
-  bounds: L.latLngBounds([39.3682, -75.9374], [42.0329, -71.7187])
-});
-
-
-var Satellite = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}');
-
-
-var map = L.map('map').setView([40.7826, -73.9656], 15);
-Satellite.addTo(map);
-
-
-var squirrelLayer = L.markerClusterGroup();
-
-L.geoJSON(Squirrels, {
-    pointToLayer: function (feature, latlng) {
-        console.log("Adding marker for feature:", feature);  // Log each feature being added
-        return L.marker(latlng, {icon: Squirrel}).bindPopup(`
-            <div style="text-align: center;">
-                <p>Chirp Chirp</p>
-                <p>Wassup! I'm a Squirrel!</p>
-                <p>Here's my stats:</p>
-                <p>Color = ${feature.properties["Primary Fur Color"] || "N/A"}</p>
-                <p>Age = ${feature.properties.Age || "N/A"}</p>
-                <p>Date = ${feature.properties.Date || "N/A"}</p>
-            </div>
-        `);
-    }
-}).addTo(squirrelLayer);  // Add to cluster group
-
-
-squirrelLayer.addTo(map)
-
-
-var baseMaps = {
-    "Satellite": Satellite,
-    "NYC Baselayer": baselayer
-};
-
-var overlayMaps = {
-    "Squirrels": squirrelLayer
-};
-
-
-L.control.layers(baseMaps, overlayMaps).addTo(map);
-
-</script>
