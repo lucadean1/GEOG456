@@ -1,8 +1,8 @@
 
 var Squirrel = L.icon({
     iconUrl: 'squirrel.png',
-    iconSize: [12, 12],
-    iconAnchor: [6, 6],
+    iconSize: [18, 18],
+    iconAnchor: [9, 9],
     popupAnchor:  [0, 0]
 
 })
