@@ -25,6 +25,22 @@
         
     }
     #map {flex: 1; }
+    table {
+        font-family: Arial, Helvetica, sans-serif;
+        border-collapse: collapse;
+        width: 100%;
+        border-radius: 8px;
+        overflow: hidden;
+        box-shadow: 0 10px 20px rgba(0, 0, 0, 0.2);
+    }
+    td, th {
+        border: 1px solid #dddddd;
+        text-align: left;
+        padding: 10px;
+    }
+
+        tr:nth-child(even) {
+        background-color: #dddddd;
 </style>
 
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
@@ -38,6 +54,24 @@ crossorigin=""/>
     </div>
     <h2>French Broad River Flow and Guage Height</h2>
     <h3>USGS Stations on the French Broad River near Asheville reporting flow (cubic feet per minute) and guage height (feet)</h3>
+    <table>
+        <tr>
+            <td>Action Stage</td>
+            <td style="background-color: yellow;">Yellow</td>
+        </tr>
+        <tr>
+            <td>Minor Flooding</td>
+            <td style="background-color: orange;">Orange</td>
+        </tr>
+        <tr>
+            <td>Moderate Flooding</td>
+            <td style="background-color: red;">Red</td>
+        </tr>
+        <tr>
+            <td>Major Flooding</td>
+            <td style="background-color: magenta;">Magenta</td>
+        </tr>
+    </table>
     <h3 id="mytext"></h3>
     <input id='myslider' type="range" value="0" name="slider" min="0" max="395" oninput="myslider(value)">
     <div id="map"></div>
