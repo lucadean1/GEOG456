@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HW5</title>
+<style>
+    body {
+        background-color: beige;
+        margin: 0;
+        padding: 0;
+        display: flex;
+        flex-direction: column;
+        height: 100vh;
+    }
+    #heading {
+        font-family: Helvetica;
+        width: 100%;
+        
+        background-color: darkred;
+        color: aliceblue;
+        text-align: center;
+        padding: 10px 0;
+        box-sizing: border-box;
+        
+    }
+    #map {flex: 1; }
+</style>
+
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY="
+crossorigin=""/>
+
+</head>
+<body>
+    <div id = 'heading'>
+        <h1>Homework 5</h1>
+    </div>
+    <h2>French Broad River Flow and Guage Height</h2>
+    <h3>USGS Stations on the French Broad River near Asheville reporting flow (cubic feet per minute) and guage height (feet)</h3>
+    <h3 id="mytext"></h3>
+    <input id='myslider' type="range" value="0" name="slider" min="0" max="395" oninput="myslider(value)">
+    <div id="map"></div>
+</body>
+</html>
+
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo="
+crossorigin=""></script> 
+<script src="stations_data.js"></script>
+
+<script>
+    document.getElementById('mytext').innerHTML = 'Date: ' + data.features[0].properties.measurements[0].datetime.slice(0,-6)
+    var map = L.map('map').setView([35.5975, -82.5461], 10);
+    L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
+    var geoJSON;
+    myslider(0);
+    function myslider(value) {
+        if (geoJSON) {map.removeLayer(geoJSON);}
+        document.getElementById('mytext').innerHTML = 'Date: ' + data.features[0].properties.measurements[value].datetime.slice(0,-6)
+        geoJSON = L.geoJSON(data, {
+            pointToLayer: function(feature, latlng) {
+                var latestMeasurement = feature.properties.measurements[value];
+                var flow = latestMeasurement.flow || 'N/A';
+                var level = latestMeasurement.level || 'N/A';
+                var time = latestMeasurement.datetime || 'N/A';
+                var floodLevels = feature.properties.flood_levels;
+                var color = 'blue';
+
+                color = parseFloat(level) > floodLevels.major ? 'magenta' :
+                    parseFloat(level) > floodLevels.moderate ? 'red' :
+                    parseFloat(level) > floodLevels.minor ? 'orange' :
+                    parseFloat(level) > floodLevels.action ? 'yellow' : 'blue';
+                var radius = parseFloat(level);
+                return L.circleMarker(latlng, {
+                    radius: radius,
+                    color: color,
+                    fillColor: color,
+                    fillOpacity: 0.7
+                }).bindPopup(`
+                    <b>${feature.properties.name}</b><br>
+                    <b>Time:</b> ${time}<br>
+                    <b>Flow Rate:</b> ${flow} cfs<br>
+                    <b>Gauge Height:</b> ${level} ft
+                `);
+            }
+        }).addTo(map);
+
+    }
+</script>
