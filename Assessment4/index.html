@@ -93,12 +93,8 @@ crossorigin=""/>
             </table>
         </div>
         <div id="tablediv">
+            <H3 id="stationname"></H3>
             <table id = "mytable">
-                <tr>
-                    <th>Time</th>
-                    <th>Flow Rate</th>
-                    <th>Guage Height</th>
-                </tr>
             </table>
         </div>
     </div>
@@ -137,6 +133,8 @@ var myGeojson = L.geoJSON(data, {
 
 function addInformation(e) {
     var e = e.target.feature.properties
+    var nameh3 = document.getElementById('stationname')
+    nameh3.innerHTML = 'Station Name: ' + e.name
     var x = document.getElementById('mytable');
     x.innerHTML = "<tr><th>Time</th><th>Flow Rate</th><th>Guage Height</th></tr>";
     var measurements = e.measurements;
