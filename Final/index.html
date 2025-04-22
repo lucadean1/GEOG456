@@ -144,14 +144,16 @@
     <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
 </head>
 <body>
-    <h1>Final Project</h1>
+    <h1>Firearm Deaths and Policies</h1>
+    <h2>View Deaths by Firearms</h2>
 
     <label for="deathType">Select Death Type:</label>
     <select id="deathType">
+        <option value="total">Total</option>
         <option value="suicides">Suicides</option>
         <option value="homicides">Homicides</option>
         <option value="other">Other</option>
-        <option value="total">Total</option>
+        
     </select>
     <h3 id="mytext"></h3>
     <input id='myslider' type="range" value="1968" name="slider" min="1968" max="2023" oninput="myslider(value)">
@@ -165,7 +167,7 @@
             <div id="dchart"><canvas id="deathChart"></canvas></div>
         </div>
     </div>
-    
+    <h2>1900-2025 Laws (Cess Choices, More Times)</h2>
     <select id="lawType">
         <option value="assault_ban">Assault Weapon Ban</option>
         <option value="high_cap_mags_ban">High Capacity Magazines Ban</option>
@@ -181,7 +183,7 @@
     <input id='myslider1' type="range" value="2025" name="slider" min="1900" max="2025" oninput="myslider1(value)">
     <div id="map2"></div>
 
-    <h1>Firearm Policy Provision Viewer</h1>
+    <h2>Select a Category and View State Compliance</h2>
     <select id="categorySelector" onchange="showPolicy()">
         <option value="">-- Choose a category --</option>
         <option value="topten" selected>Most Impactful (Top 10 Essentials)</option>
@@ -195,15 +197,17 @@
         <option value="gvro">Gun Violence Restraining Orders</option>
     </select>
     <div id="policyDisplay" class="placeholder">Select a category above to view definitions.</div>
-    <h1>Selected Policies Map</h1>
+    
     <h3 id="mytext2"></h3>
     <input id='myslider2' type="range" value="1991" name="slider" min="1991" max="2019" oninput="myslider2(value)">
     
     <div class="row">
         <div class="map-container">
+            <h2>Selected Policies Map, Compliance 0-100%</h2>
             <div id="map3"></div>
         </div>
         <div class="chart-container">
+            <h2>Chart Highlight Shows State Compliance 0-100%</h2>
             <div id="dchart2"><canvas id="deathChart2"></canvas></div>
         </div>
     </div>
