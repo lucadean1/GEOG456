@@ -167,7 +167,7 @@
             <div id="dchart"><canvas id="deathChart"></canvas></div>
         </div>
     </div>
-    <h2>1900-2025 Laws (Cess Choices, More Times)</h2>
+    <h2>1900-2025 Laws (Less Choices, More Times)</h2>
     <select id="lawType">
         <option value="assault_ban">Assault Weapon Ban</option>
         <option value="high_cap_mags_ban">High Capacity Magazines Ban</option>
@@ -613,13 +613,12 @@
             const values = [];
             const policyPercentages = [];
             
-            // Collect data for all years (1991-2019)
             for (let y = 1991; y <= 2019; y++) {
                 labels.push(y);
                 values.push(getTotalDeaths(stateName, y));
                 const percentage = getPolicyStatus(stateName, y, selectedPolicies);
                 policyPercentages.push(percentage);
-                console.log(`Year ${y}: ${percentage}% policies`); // Debug log
+                console.log(`Year ${y}: ${percentage}% policies`); 
             }
             const annotations = policyPercentages.map((percentage, index) => {
                 return {
@@ -734,62 +733,12 @@
             geoJSON2 = loadLawGeoJSON(map2, us_states, currentLaw, lawYear);
         });
 
+        showPolicy();  
         myslider(year);
         myslider1(lawYear);
-        myslider2(policyYear);
+        
         updateNationwideChart(document.getElementById('deathType').value);
-        window.onload = function() {
-            console.log("Policy data loaded:", policy_data ? "Yes" : "No");
-            if (policy_data && policy_data.length > 0) {
-                console.log("First policy record:", policy_data[0]);
-                console.log("Available policy keys:", Object.keys(policy_data[0]));
-            }
-            
-            showPolicy();
-            myslider(year);
-            myslider1(lawYear);
-            myslider2(policyYear);
-            updateNationwideChart(document.getElementById('deathType').value);
-
-            const ctx = document.getElementById('deathChart2').getContext('2d');
-            deathChart2Instance = new Chart(ctx, {
-                type: 'line',
-                data: {
-                    labels: Array.from({length: 29}, (_, i) => 1991 + i),
-                    datasets: [{
-                        label: 'Select a state to view data',
-                        data: [],
-                        borderColor: 'rgb(54, 162, 235)',
-                        borderWidth: 1
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    scales: { 
-                        y: { 
-                            beginAtZero: true,
-                            grid: { display: false }
-                        },
-                        x: {
-                            type: 'category',
-                            grid: { display: false }
-                        }
-                    },
-                    plugins: {
-                        annotation: {
-                            annotations: [{
-                                type: 'box',
-                                xMin: -0.5,
-                                xMax: 28.5,
-                                backgroundColor: 'rgba(204, 204, 204, 0.3)',
-                                borderWidth: 0,
-                                drawTime: 'beforeDraw'
-                            }]
-                        }
-                    }
-                }
-            });
-        };
+        
         
     </script>
 </body>

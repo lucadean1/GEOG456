@@ -1,0 +1,555 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Final Project</title>
+    <style>
+        #map1, #map2 {
+            width: 50vw;
+            height: 50vh;
+            margin-bottom: 20px;
+            border: 1px solid #ccc;
+        }
+        #deathChart {
+            width: 50vw;
+            height: 50vh;
+        }
+
+        select {
+            margin: 20px;
+            padding: 10px;
+        }
+        #categorySelector {
+            width: 100%;
+            font-size: 1rem;
+            padding: 0.5rem;
+            margin-bottom: 1.5rem;
+            border-radius: 6px;
+            border: 1px solid #ccc;
+            background-color: #fff;
+            }
+
+        #policyDisplay {
+            background: #fff;
+            padding: 1.5rem;
+            border-radius: 10px;
+            border: 1px solid #ccc;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+            margin-top: 1rem;
+            }
+
+        #policyDisplay h2 {
+            font-size: 1.25rem;
+            margin-top: 0;
+            margin-bottom: 1rem;
+            }
+
+        #policyDisplay ul {
+            list-style: none;
+            padding-left: 0;
+            }
+
+        #policyDisplay li {
+            margin-bottom: 0.5rem;
+            padding-left: 1.5em;
+            position: relative;
+            }
+
+        #policyDisplay li::before {
+            content: "🔹";
+            position: absolute;
+            left: 0;
+            top: 0;
+            }
+
+        #policyDisplay.placeholder {
+            color: #888;
+            font-style: italic;
+            }
+    </style>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
+</head>
+<body>
+    <h1>Final Project</h1>
+
+    <label for="deathType">Select Death Type:</label>
+    <select id="deathType">
+        <option value="suicides">Suicides</option>
+        <option value="homicides">Homicides</option>
+        <option value="other">Other</option>
+        <option value="total">Total</option>
+    </select>
+    <h3 id="mytext"></h3>
+    <input id='myslider' type="range" value="1968" name="slider" min="1968" max="2023" oninput="myslider(value)">
+    <div id="map1"></div>
+    <button id="resetChart">Reset to Nationwide</button>
+
+    <canvas id="deathChart"></canvas>
+
+    <select id="lawType">
+        <option value="assault_ban">Assault Weapon Ban</option>
+        <option value="high_cap_mags_ban">High Capacity Magazines Ban</option>
+        <option value="dealer_background">Background Check Required for Dealers</option>
+        <option value="handgun_ban">Handgun Ban</option>
+        <option value="1_per_month">One Gun per Month Rule</option>
+        <option value="permit_reqd">Permit Required for Handgun Purchase</option>
+        <option value="private_background">Background Check Required for Private Sales</option>
+        <option value="safety_training_purchase">Safety Training Required for Handgun Purchase</option>
+        <option value="safety_training_carry">Safety Training Required for Handgun Carry</option>
+        <option value="no_stand_ground"> No Stand Your Ground Law</option>
+    </select>
+    <h3 id="mytext1"></h3>
+    <input id='myslider1' type="range" value="2025" name="slider" min="1900" max="2025" oninput="myslider1(value)">
+    <div id="map2"></div>
+
+    <h1>Firearm Policy Provision Viewer</h1>
+
+    <select id="categorySelector" onchange="showPolicy()">
+        <option value="">-- Choose a category --</option>
+        <option value="topten" selected>🎯 Most Impactful (Top 10 Essentials)</option>
+        <option value="">-- Choose a category --</option>
+        <option value="background">🔎 Background Checks</option>
+        <option value="prohibitions">🚫 Prohibitions for High-Risk Possession</option>
+        <option value="permits">🧾 Permit and Purchase Regulations</option>
+        <option value="dealers">📦 Dealer Regulations</option>
+        <option value="assault">💣 Assault Weapons & Magazine Bans</option>
+        <option value="childaccess">👶 Child Access Prevention</option>
+        <option value="concealed">🔐 Concealed Carry Restrictions</option>
+        <option value="gvro">⚠️ Gun Violence Restraining Orders (GVROs)</option>
+        <option value="topten">🎯 Most Impactful (Top 10 Essentials)</option>
+        </select>
+
+    <div id="policyDisplay" class="placeholder">Select a category above to view definitions.</div>
+
+    <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+    <script src="us-states.js"></script>
+    <script src="deaths_data.js"></script>
+    <script src="data.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-annotation@1.4.0"></script>
+    <script>
+        Chart.register(window['chartjs-plugin-annotation']);
+    </script>
+    
+
+
+    <script>
+        let deathChartInstance = null;
+        let year = 1968;
+        let lawYear = 2025;
+        let currentLaw = "assault_ban";
+
+        let geoJSON = null;
+        let geoJSON2 = null;
+        let selectedPolicies = [];
+
+        const policies = {
+            background: {
+                title: "🔎 Background Checks",
+                items: [
+                    ["universal", "Universal background checks required for all firearm purchases"],
+                    ["universalh", "Universal background checks for handguns"],
+                    ["mentalhealth", "Background checks must include state mental health records"],
+                    ["statechecks", "State conducts additional background checks beyond NICS"],
+                    ["threedaylimit", "Removes loopholes by allowing longer than 3 days to complete background checks"]
+                ]
+                },
+
+                prohibitions: {
+                title: "🚫 Prohibitions for High-Risk Possession",
+                items: [
+                    ["felony", "Prohibits firearm possession by people with felony convictions"],
+                    [["violent", "violenth"], "Prohibits possession for people with violent misdemeanor convictions"],
+                    ["danger", "Bars possession if deemed a danger to self or others by a court"],
+                    ["invcommitment", "Bans possession for those involuntarily committed to psychiatric care"],
+                    ["relinquishment", "Requires people to give up guns after becoming prohibited"]
+                ]
+                },
+
+                permits: {
+                title: "🧾 Permit and Purchase Regulations",
+                items: [
+                    [["permit", "permith"], "Requires permit or license to purchase firearms or handguns"],
+                    ["permitlaw", "Involves law enforcement in permitting"],
+                    ["training", "Requires safety training or testing before receiving a license"],
+                    [["waiting", "waitingh"], "Enforces a waiting period before purchase"]
+                ]
+                },
+
+                dealers: {
+                title: "📦 Dealer Regulations",
+                items: [
+                    [["dealer", "dealerh"], "State dealer license required to sell firearms/handguns"],
+                    [["recordsdealer", "recordsdealerh"], "Dealers must keep records of firearm/handgun sales"],
+                    [["reportdealer", "reportdealerh"], "Dealers must report firearm/handgun sales to the state"],
+                    ["inspection", "Mandatory police inspections of dealers"],
+                    ["liability", "Dealers held liable for damages from illegal sales"]
+                ]
+                },
+
+                assault: {
+                title: "💣 Assault Weapons & Magazine Bans",
+                items: [
+                    [["assault", "onefeature", "assaultlist"], "Bans on assault weapons by various definitions"],
+                    [["magazine", "tenroundlimit"], "Ban on large capacity magazines (>10 rounds)"]
+                ]
+                },
+
+                childaccess: {
+                title: "👶 Child Access Prevention",
+                items: [
+                    ["locked", "Requires secure firearm storage in homes"],
+                    [["capaccess", "capuses", "capliability"], "Criminal liability if a child accesses, uses, or even has the potential to access a negligently stored firearm"],
+                    [["lockp", "lockstandards"], "Safety locks required on handguns sold"]
+                ]
+                },
+
+                concealed: {
+                title: "🔐 Concealed Carry Restrictions",
+                items: [
+                    ["permitconcealed", "Requires permit for concealed carry"],
+                    ["mayissue", "“May-issue” framework (authorities have discretion in issuing permits)"],
+                    ["ccbackground / ccbackgroundnics", "Background checks required for concealed carry"]
+                ]
+                },
+
+                gvro: {
+                title: "⚠️ Gun Violence Restraining Orders (GVROs)",
+                items: [
+                    ["gvro", "Family or law enforcement can petition to remove guns from dangerous individuals"],
+                    ["gvrolawenforcement", "Law enforcement can request gun removal from dangerous individuals"]
+                ]
+                },
+
+                topten: {
+                title: "🎯 Most Impactful (Top 10 Essentials)",
+                items: [
+                    ["universal", "Universal background checks"],
+                    ["felony", "Ban on felons possessing guns"],
+                    ["danger", "Court-deemed dangerous persons barred"],
+                    ["permit", "Firearm purchase requires permit"],
+                    ["training", "Mandatory safety training"],
+                    ["locked", "Secure storage law"],
+                    ["capaccess", "Liability if child accesses firearm"],
+                    ["assault", "Assault weapon ban"],
+                    ["magazine", "Large-capacity magazine ban"],
+                    ["gvro", "Gun violence restraining order law"]
+                ]
+                }
+        };
+
+        function showPolicy() {
+            const category = document.getElementById('categorySelector').value;
+            const display = document.getElementById('policyDisplay');
+
+            if (!category || !policies[category]) {
+            display.innerHTML = '<p class="placeholder">Select a category above to view definitions.</p>';
+            return;
+            }
+
+            const { title, items } = policies[category];
+            const listItems = items.map(([, desc]) => `<li>${desc}</li>`).join("");
+
+            display.innerHTML = `
+            <h2>${title}</h2>
+            <ul>${listItems}</ul>
+            `;
+            selectedPolicies = []
+            for (const item of items) {
+                if (Array.isArray(item[0])) {
+                    selectedPolicies.push(...item[0]);
+                } else {
+                    selectedPolicies.push(item[0]);
+                }
+    }
+
+    console.log("Selected variable keys:", selectedPolicies);
+        }
+
+        function updateNationwideChart(deathType) {
+            const labels = [];
+            const values = [];
+
+            for (let y = 1968; y <= 2023; y++) {
+                labels.push(y);
+                let total = 0;
+
+                if (deathType === "total") {
+                    // Manually sum suicides, homicides, and other
+                    for (const state in deaths_data["suicides"]) {
+                        const suicides = deaths_data["suicides"][state]?.[y] || 0;
+                        const homicides = deaths_data["homicides"][state]?.[y] || 0;
+                        const other = deaths_data["other"][state]?.[y] || 0;
+                        total += suicides + homicides + other;
+                    }
+                } else {
+                    for (const state in deaths_data[deathType]) {
+                        total += deaths_data[deathType][state]?.[y] || 0;
+                    }
+                }
+
+                values.push(total);
+            }
+
+            const chartData = {
+                labels: labels,
+                datasets: [{
+                    label: `Nationwide ${deathType.charAt(0).toUpperCase() + deathType.slice(1)} Deaths`,
+                    data: values,
+                    fill: false,
+                    borderColor: 'rgb(255, 99, 132)',
+                    tension: 0.1
+                }]
+            };
+
+            const ctx = document.getElementById('deathChart').getContext('2d');
+
+            if (deathChartInstance) {
+                deathChartInstance.destroy();
+            }
+
+            deathChartInstance = new Chart(ctx, {
+                type: 'line',
+                data: chartData,
+                options: {
+                    responsive: true,
+                    scales: {
+                        y: {
+                            beginAtZero: true
+                        }
+                    },
+                    plugins: {
+                        annotation: {
+                            annotations: {
+                                line1994: {
+                                    type: 'line',
+                                    xMin: 1994,
+                                    xMax: 1994,
+                                    borderColor: 'green',
+                                    borderWidth: 2,
+                                    label: {
+                                        content: [
+                                            '1994:',
+                                            'Background checks required',
+                                            'Assault weapons banned',
+                                            'High-capacity mags banned'
+                                        ],
+                                        enabled: true,
+                                        position: 'start',
+                                        backgroundColor: 'rgba(0,128,0,0.7)',
+                                        color: 'white',
+                                        font: { size: 10 }
+                                    }
+                                },
+                                line2004: {
+                                    type: 'line',
+                                    xMin: 2004,
+                                    xMax: 2004,
+                                    borderColor: 'red',
+                                    borderWidth: 2,
+                                    label: {
+                                        content: [
+                                            '2004:',
+                                            'Assault weapon ban expired',
+                                            'High-capacity mag ban expired'
+                                        ],
+                                        enabled: true,
+                                        position: 'start',
+                                        backgroundColor: 'rgba(255,0,0,0.7)',
+                                        color: 'white',
+                                        font: { size: 10 }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+
+        }
+
+
+
+        function getDeathDataForState(stateName, year, type) {
+            if (deaths_data[type] && deaths_data[type][stateName] && deaths_data[type][stateName][year]) {
+                return deaths_data[type][stateName][year];
+            }
+            return 0;
+        }
+
+        function getTotalDeaths(stateName, year) {
+            const suicides = getDeathDataForState(stateName, year, "suicides");
+            const homicides = getDeathDataForState(stateName, year, "homicides");
+            const other = getDeathDataForState(stateName, year, "other");
+            return suicides + homicides + other;
+        }
+
+        function getLawStatus(stateName, year, lawType) {
+            if (
+                lawData[lawType] &&
+                lawData[lawType][stateName] &&
+                lawData[lawType][stateName][year]
+            ) {
+                return lawData[lawType][stateName][year];
+            }
+            return false;
+        }
+
+        function getColor(deaths) {
+            return deaths > 1000 ? '#800026' :
+                   deaths > 500  ? '#BD0026' :
+                   deaths > 100  ? '#E31A1C' :
+                   deaths > 50   ? '#FC4E2A' :
+                   deaths > 10   ? '#FD8D3C' :
+                   deaths > 0    ? '#FEB24C' :
+                                   '#FFEDA0';
+        }
+
+        function loadGeoJSON(map, data, deathType) {
+            return L.geoJSON(data, {
+                style: function(feature) {
+                    const state = feature.properties.name;
+                    const deaths = (deathType === "total") 
+                        ? getTotalDeaths(state, year) 
+                        : getDeathDataForState(state, year, deathType);
+                    return {
+                        fillColor: getColor(deaths),
+                        weight: 1,
+                        opacity: 1,
+                        color: 'white',
+                        dashArray: '3',
+                        fillOpacity: 0.7
+                    };
+                },
+                onEachFeature: function(feature, layer) {
+                    const state = feature.properties.name;
+                    const deaths = (deathType === "total") 
+                        ? getTotalDeaths(state, year) 
+                        : getDeathDataForState(state, year, deathType);
+
+                    layer.bindPopup(`<strong>${state}</strong><br>${deathType.charAt(0).toUpperCase() + deathType.slice(1)} in ${year}: ${deaths}`);
+
+                    layer.on('click', () => {
+                        const labels = [];
+                        const values = [];
+
+                        for (let y = 1968; y <= 2023; y++) {
+                            labels.push(y);
+                            const val = (deathType === "total") 
+                                ? getTotalDeaths(state, y) 
+                                : getDeathDataForState(state, y, deathType);
+                            values.push(val);
+                        }
+
+                        const chartData = {
+                            labels: labels,
+                            datasets: [{
+                                label: `${deathType.charAt(0).toUpperCase() + deathType.slice(1)} in ${state}`,
+                                data: values,
+                                fill: false,
+                                borderColor: 'rgb(75, 192, 192)',
+                                tension: 0.1
+                            }]
+                        };
+
+                        const ctx = document.getElementById('deathChart').getContext('2d');
+
+                        // Destroy previous chart if exists
+                        if (deathChartInstance) {
+                            deathChartInstance.destroy();
+                        }
+
+                        deathChartInstance = new Chart(ctx, {
+                            type: 'line',
+                            data: chartData,
+                            options: {
+                                responsive: true,
+                                scales: {
+                                    y: {
+                                        beginAtZero: true
+                                    }
+                                }
+                            }
+                        });
+                    });
+                }
+
+            }).addTo(map);
+        }
+
+        function loadLawGeoJSON(map, data, lawType, year) {
+            return L.geoJSON(data, {
+                style: function(feature) {
+                    const state = feature.properties.name;
+                    const hasLaw = getLawStatus(state, year, lawType);
+                    return {
+                        fillColor: hasLaw ? '#228B22' : '#ccc',
+                        weight: 1,
+                        opacity: 1,
+                        color: 'white',
+                        dashArray: '3',
+                        fillOpacity: 0.7
+                    };
+                },
+                onEachFeature: function(feature, layer) {
+                    const state = feature.properties.name;
+                    const hasLaw = getLawStatus(state, year, lawType);
+                    layer.bindPopup(`<strong>${state}</strong><br>${lawType.replaceAll("_", " ")}: ${hasLaw ? 'Yes' : 'No'}`);
+                }
+            }).addTo(map);
+        }
+
+        // Map 1 setup
+        const map1 = L.map('map1').setView([37.0902, -95.7129], 4);
+        L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}.png', {
+            attribution: '&copy; OpenStreetMap & CartoDB'
+        }).addTo(map1);
+
+        function myslider(value) {
+            year = value;
+            if (geoJSON) { map1.removeLayer(geoJSON); }
+            document.getElementById('mytext').innerHTML = 'Year ' + year;
+            geoJSON = loadGeoJSON(map1, us_states, document.getElementById('deathType').value);
+        }
+
+        // Map 2 setup
+        const map2 = L.map('map2').setView([37.0902, -95.7129], 4);
+        L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}.png', {
+            attribution: '&copy; OpenStreetMap & CartoDB'
+        }).addTo(map2);
+
+        function myslider1(value) {
+            lawYear = value;
+            if (geoJSON2) { map2.removeLayer(geoJSON2); }
+            document.getElementById('mytext1').innerHTML = 'Year ' + lawYear;
+            geoJSON2 = loadLawGeoJSON(map2, us_states, currentLaw, lawYear);
+        }
+
+        // Event listeners
+        document.getElementById('deathType').addEventListener('change', function(e) {
+            if (geoJSON) { map1.removeLayer(geoJSON); }
+            geoJSON = loadGeoJSON(map1, us_states, e.target.value);
+            updateNationwideChart(e.target.value);
+        });
+
+        document.getElementById('resetChart').addEventListener('click', function() {
+            updateNationwideChart(document.getElementById('deathType').value);
+        });
+
+        document.getElementById('lawType').addEventListener('change', function(e) {
+            currentLaw = e.target.value;
+            if (geoJSON2) { map2.removeLayer(geoJSON2); }
+            geoJSON2 = loadLawGeoJSON(map2, us_states, currentLaw, lawYear);
+        });
+
+        // Initial map loads
+        myslider(year);
+        myslider1(lawYear);
+        updateNationwideChart(document.getElementById('deathType').value);
+        window.onload = function() {
+            showPolicy();
+        };
+    </script>
+</body>
+</html>
